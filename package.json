@@ -4,7 +4,7 @@
   "description": "Automated racquetball court booking bot (configurable, Playwright)",
   "main": "src/bot.js",
   "scripts": {
-    "start": "node bot.js",
+    "start": "npx playwright install chromium && node bot.js",
     "run": "node bot.js",
     "inspect": "node inspect_selectors.js",
     "render": "npx playwright install chromium && node bot.js"
