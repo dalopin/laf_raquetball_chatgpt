@@ -27,12 +27,21 @@ async function setupBrowser() {
 async function ensureLoggedIn(page) {
   async function loadReservationPage() {
     await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' }).catch(() => {});
-    const dropdown = await page.waitForSelector('#ddlDates', { timeout: 40000 }).catch(() => null);
+    const dropdown = await page.waitForSelector('#ddlDates', { timeout: 45000 }).catch(() => null);
     return dropdown !== null;
   }
 
-  // Force login screen to avoid "session already active" page
-  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' }).catch(() => {});
+  let attempts = 3;
+  while (attempts > 0) {
+    const loaded = await loadReservationPage();
+    if (loaded) break;
+    attempts -= 1;
+    if (attempts === 0) {
+      throw new Error('Reservation controls did not load (missing #ddlDates)');
+    }
+    log('Reservation page did not load; retrying...');
+    await page.waitForTimeout(3000);
+  }
 
   const loginForm = await page.$('#txtUser').catch(() => null);
   if (loginForm) {
@@ -47,11 +56,16 @@ async function ensureLoggedIn(page) {
     log('Login form not found; assuming session already valid.');
   }
 
-  const afterLoginLoaded = await loadReservationPage();
-  if (!afterLoginLoaded) {
-    log('Reservation controls missing after login; retrying once more...');
-    const finalAttempt = await loadReservationPage();
-    if (!finalAttempt) throw new Error('Reservation controls did not load (missing #ddlDates)');
+  attempts = 3;
+  while (attempts > 0) {
+    const loaded = await loadReservationPage();
+    if (loaded) break;
+    attempts -= 1;
+    if (attempts === 0) {
+      throw new Error('Reservation controls did not load (missing #ddlDates)');
+    }
+    log('Reservation controls missing after login; retrying...');
+    await page.waitForTimeout(3000);
   }
 }
 
