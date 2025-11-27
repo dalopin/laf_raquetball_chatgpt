@@ -34,6 +34,7 @@ async function ensureLoggedIn(page) {
 
   log('Opening login page...');
   await page.goto(LOGIN_URL, { waitUntil: 'networkidle' }).catch(() => {});
+  await acceptCookies(page);
   await page.waitForSelector('#txtUser', { timeout: 30000 }).catch(() => null);
 
   const loginFormVisible = await page.$('#txtUser').catch(() => null);
