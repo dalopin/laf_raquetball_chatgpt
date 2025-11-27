@@ -32,16 +32,20 @@ async function ensureLoggedIn(page) {
   }
 
   // Force login screen to avoid "session already active" page
-  await page.goto(`${RESERVATION_URL}?ForceLogin=1`, { waitUntil: 'networkidle' }).catch(() => {});
-  await page.waitForSelector('#txtUser', { timeout: 20000 }).catch(() => null);
+  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' }).catch(() => {});
 
-  log('Logging in...');
-  await page.fill('#txtUser', USER);
-  await page.fill('#txtPassword', PASS);
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
-    page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
-  ]);
+  const loginForm = await page.$('#txtUser').catch(() => null);
+  if (loginForm) {
+    log('Logging in...');
+    await page.fill('#txtUser', USER);
+    await page.fill('#txtPassword', PASS);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
+      page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
+    ]);
+  } else {
+    log('Login form not found; assuming session already valid.');
+  }
 
   const afterLoginLoaded = await loadReservationPage();
   if (!afterLoginLoaded) {
