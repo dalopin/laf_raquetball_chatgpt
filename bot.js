@@ -7,6 +7,7 @@ const HEADLESS = process.env.HEADLESS !== 'false';
 const ZIP_CODE = process.env.LOCATION_ZIP || '92780';
 const DURATION_MINUTES = process.env.DURATION_MINUTES || '60';
 const PREFERRED_COURT = process.env.COURT_NUMBER ? Number(process.env.COURT_NUMBER) : 2;
+const LOGIN_URL = 'https://lafitness.com/Pages/login.aspx';
 
 function log(...args) {
   console.log(new Date().toISOString(), ...args);
@@ -31,32 +32,19 @@ async function ensureLoggedIn(page) {
     return dropdown !== null;
   }
 
+  log('Opening login page...');
+  await page.goto(LOGIN_URL, { waitUntil: 'networkidle' }).catch(() => {});
+  await page.waitForSelector('#txtUser', { timeout: 30000 });
+
+  log('Logging in...');
+  await page.fill('#txtUser', USER);
+  await page.fill('#txtPassword', PASS);
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
+    page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
+  ]);
+
   let attempts = 3;
-  while (attempts > 0) {
-    const loaded = await loadReservationPage();
-    if (loaded) break;
-    attempts -= 1;
-    if (attempts === 0) {
-      throw new Error('Reservation controls did not load (missing #ddlDates)');
-    }
-    log('Reservation page did not load; retrying...');
-    await page.waitForTimeout(3000);
-  }
-
-  const loginForm = await page.$('#txtUser').catch(() => null);
-  if (loginForm) {
-    log('Logging in...');
-    await page.fill('#txtUser', USER);
-    await page.fill('#txtPassword', PASS);
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
-      page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
-    ]);
-  } else {
-    log('Login form not found; assuming session already valid.');
-  }
-
-  attempts = 3;
   while (attempts > 0) {
     const loaded = await loadReservationPage();
     if (loaded) break;
