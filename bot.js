@@ -25,7 +25,7 @@ async function setupBrowser() {
 }
 
 async function ensureLoggedIn(page) {
-  await page.goto(RESERVATION_URL, { waitUntil: 'domcontentloaded' });
+  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' });
 
   const needsLogin = await page.$('#txtUser');
   if (needsLogin) {
@@ -33,15 +33,15 @@ async function ensureLoggedIn(page) {
     await page.fill('#txtUser', USER);
     await page.fill('#txtPassword', PASS);
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 20000 }).catch(() => {}),
+      page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
       page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
     ]);
   } else {
     log('Session already active');
   }
 
-  await page.goto(RESERVATION_URL, { waitUntil: 'domcontentloaded' });
-  await page.waitForSelector('#ddlDates', { timeout: 20000 });
+  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' });
+  await page.waitForSelector('#ddlDates', { timeout: 40000 });
 }
 
 async function selectClub(page) {
