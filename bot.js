@@ -31,20 +31,17 @@ async function ensureLoggedIn(page) {
     return dropdown !== null;
   }
 
-  await loadReservationPage();
+  // Force login screen to avoid "session already active" page
+  await page.goto(`${RESERVATION_URL}?ForceLogin=1`, { waitUntil: 'networkidle' }).catch(() => {});
+  await page.waitForSelector('#txtUser', { timeout: 20000 }).catch(() => null);
 
-  const needsLogin = await page.$('#txtUser').catch(() => null);
-  if (needsLogin) {
-    log('Logging in...');
-    await page.fill('#txtUser', USER);
-    await page.fill('#txtPassword', PASS);
-    await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
-      page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
-    ]);
-  } else {
-    log('Session already active');
-  }
+  log('Logging in...');
+  await page.fill('#txtUser', USER);
+  await page.fill('#txtPassword', PASS);
+  await Promise.all([
+    page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
+    page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
+  ]);
 
   const afterLoginLoaded = await loadReservationPage();
   if (!afterLoginLoaded) {
