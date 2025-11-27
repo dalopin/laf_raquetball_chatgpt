@@ -13,6 +13,18 @@ function log(...args) {
   console.log(new Date().toISOString(), ...args);
 }
 
+async function acceptCookies(page) {
+  const selectors = ['#onetrust-accept-btn-handler', 'button:has-text("Accept All Cookies")'];
+  for (const sel of selectors) {
+    const btn = await page.$(sel).catch(() => null);
+    if (btn) {
+      await btn.click().catch(() => {});
+      log('Accepted cookie banner');
+      break;
+    }
+  }
+}
+
 async function setupBrowser() {
   log('Launching Chromium (headless=', HEADLESS, ')');
   const browser = await chromium.launch({ headless: HEADLESS });
