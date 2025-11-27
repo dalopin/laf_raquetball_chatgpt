@@ -34,15 +34,20 @@ async function ensureLoggedIn(page) {
 
   log('Opening login page...');
   await page.goto(LOGIN_URL, { waitUntil: 'networkidle' }).catch(() => {});
-  await page.waitForSelector('#txtUser', { timeout: 30000 });
+  await page.waitForSelector('#txtUser', { timeout: 30000 }).catch(() => null);
 
-  log('Logging in...');
-  await page.fill('#txtUser', USER);
-  await page.fill('#txtPassword', PASS);
-  await Promise.all([
-    page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
-    page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
-  ]);
+  const loginFormVisible = await page.$('#txtUser').catch(() => null);
+  if (loginFormVisible) {
+    log('Logging in...');
+    await page.fill('#txtUser', USER);
+    await page.fill('#txtPassword', PASS);
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle', timeout: 30000 }).catch(() => {}),
+      page.click('#ctl00_MainContent_Login1_btnLogin').catch(() => {})
+    ]);
+  } else {
+    log('Login form not visible; continuing with existing session.');
+  }
 
   let attempts = 3;
   while (attempts > 0) {
