@@ -25,9 +25,9 @@ async function setupBrowser() {
 }
 
 async function ensureLoggedIn(page) {
-  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' });
+  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' }).catch(() => {});
 
-  const needsLogin = await page.$('#txtUser');
+  const needsLogin = await page.$('#txtUser').catch(() => null);
   if (needsLogin) {
     log('Logging in...');
     await page.fill('#txtUser', USER);
@@ -40,8 +40,10 @@ async function ensureLoggedIn(page) {
     log('Session already active');
   }
 
-  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' });
-  await page.waitForSelector('#ddlDates', { timeout: 40000 });
+  await page.goto(RESERVATION_URL, { waitUntil: 'networkidle' }).catch(() => {});
+  await page.waitForSelector('#ddlDates', { timeout: 40000 }).catch(() => {
+    throw new Error('Reservation controls did not load (missing #ddlDates)');
+  });
 }
 
 async function selectClub(page) {
